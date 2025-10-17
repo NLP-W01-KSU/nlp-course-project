@@ -1,1 +1,13 @@
 requests
+# Dependencies
+streamlit
+transformers
+python-dotenv
+torch
+sentencepiece
+openai
+groq
+pymupdf
+python-pptx
+python-docx
+reportlab
