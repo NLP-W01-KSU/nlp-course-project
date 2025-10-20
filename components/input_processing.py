@@ -1,4 +1,5 @@
 ﻿from transformers import PegasusTokenizer, PegasusForConditionalGeneration
+from finetune_model import finetune_pegasus
 
 content = """
 Avatar is set in a largely Asian-inspired world in which some people can telekinetically manipulate one of the four elements—water, earth, fire or air—through practices known as "bending", inspired by Chinese martial arts.
@@ -13,6 +14,10 @@ def load_base_model():
     tokenizer = PegasusTokenizer.from_pretrained(model_name)
     model = PegasusForConditionalGeneration.from_pretrained(model_name, dtype="auto", device_map="auto")
     return tokenizer, model
+
+def load_finetuned_model(model, tokenizer):
+    return finetune_pegasus(tokenizer, model, output_dir="./finetuned_model")
+    
 
 def generate_summary(tokenizer, model, content: str, num_beams=1, do_sample=False, prompt_lookup_num_tokens=None) -> str:
     # Tokenize the input content
@@ -43,3 +48,7 @@ def test_decoding_strategies(tokenizer, model):
 # Run all tests (Base Model)
 tknizer, mdl = load_base_model()
 test_decoding_strategies(tknizer, mdl)
+
+# Run all tests (Fine-tuned Model)
+mdl_ft, tknizer_ft = load_finetuned_model(mdl, tknizer)
+test_decoding_strategies(tknizer_ft, mdl_ft)

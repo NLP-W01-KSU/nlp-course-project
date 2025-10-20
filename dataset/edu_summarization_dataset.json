@@ -1,0 +1,131 @@
+{
+  "dataset_info": {
+    "name": "Educational Text Summarization Dataset",
+    "version": "1.0",
+    "description": "Sample training dataset for text summarization models in educational contexts",
+    "total_samples": 15,
+    "subject_areas": ["Science", "History", "Mathematics", "Literature", "Geography"]
+  },
+  "samples": [
+    {
+      "id": 1,
+      "subject": "Biology",
+      "grade_level": "High School",
+      "source_text": "Photosynthesis is the process by which green plants and some other organisms use sunlight to synthesize foods with the help of chlorophyll. During photosynthesis, plants take in carbon dioxide from the air and water from the soil. The chlorophyll in the leaves captures light energy from the sun. This energy is used to convert carbon dioxide and water into glucose, a type of sugar that the plant uses for energy and growth. Oxygen is released as a byproduct of this process. The overall chemical equation for photosynthesis is: 6CO2 + 6H2O + light energy → C6H12O6 + 6O2. This process occurs primarily in the leaves of plants, specifically in cellular structures called chloroplasts.",
+      "summary": "Photosynthesis is how plants use sunlight, carbon dioxide, and water to create glucose for energy while releasing oxygen. This process happens in chloroplasts within plant leaves using chlorophyll to capture light energy.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 2,
+      "subject": "History",
+      "grade_level": "Middle School",
+      "source_text": "The Renaissance was a period of cultural rebirth in Europe that began in Italy during the 14th century and spread throughout Europe until the 17th century. It marked the transition from the Middle Ages to modernity. The Renaissance was characterized by renewed interest in classical Greek and Roman culture, significant developments in art, architecture, literature, and science, and a shift toward humanism - a philosophy that emphasized human potential and achievements. Famous Renaissance figures include Leonardo da Vinci, who excelled in both art and science; Michelangelo, known for his sculptures and paintings; and William Shakespeare, whose plays and poetry revolutionized literature. The invention of the printing press by Johannes Gutenberg around 1440 helped spread Renaissance ideas throughout Europe.",
+      "summary": "The Renaissance (14th-17th century) was a European cultural rebirth starting in Italy, featuring renewed interest in classical culture, advances in art and science, humanist philosophy, and figures like da Vinci, Michelangelo, and Shakespeare. The printing press helped spread these ideas across Europe.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 3,
+      "subject": "Mathematics",
+      "grade_level": "High School",
+      "source_text": "The Pythagorean theorem is one of the most fundamental principles in geometry. It states that in a right-angled triangle, the square of the length of the hypotenuse (the side opposite the right angle) is equal to the sum of squares of the other two sides. This can be expressed as a² + b² = c², where c represents the hypotenuse and a and b represent the other two sides. This theorem has numerous practical applications in construction, navigation, computer graphics, and physics. For example, if you know the lengths of two sides of a right triangle, you can calculate the third side using this formula. The theorem is named after the ancient Greek mathematician Pythagoras, although evidence suggests that Babylonian mathematicians knew about this relationship even earlier.",
+      "summary": "The Pythagorean theorem (a² + b² = c²) states that in right triangles, the square of the hypotenuse equals the sum of squares of the other two sides. Named after Pythagoras, it has practical applications in construction, navigation, and other fields.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 4,
+      "subject": "Chemistry",
+      "grade_level": "High School",
+      "source_text": "The periodic table organizes all known chemical elements based on their atomic number, electron configuration, and recurring chemical properties. Elements are arranged in rows called periods and columns called groups. Elements in the same group share similar chemical properties. For instance, the noble gases in Group 18 are all unreactive because they have complete outer electron shells. The periodic table was first published by Dmitri Mendeleev in 1869, and it has been expanded and refined as new elements have been discovered. The table is divided into metals, nonmetals, and metalloids. Metals, which are found on the left and center of the table, are typically shiny, conduct electricity and heat well, and are malleable. Nonmetals are on the right side and have opposite properties.",
+      "summary": "The periodic table organizes elements by atomic number and properties into rows (periods) and columns (groups). Created by Mendeleev in 1869, it categorizes elements as metals, nonmetals, or metalloids, with elements in the same group sharing similar characteristics.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 5,
+      "subject": "Literature",
+      "grade_level": "High School",
+      "source_text": "A metaphor is a figure of speech that directly compares two unlike things without using 'like' or 'as.' Unlike similes, which make explicit comparisons, metaphors create implicit connections between concepts. For example, saying 'Time is a thief' doesn't mean time literally steals things, but suggests that time takes away moments from our lives. Metaphors are powerful literary devices that help writers create vivid imagery, convey complex ideas simply, and evoke emotional responses in readers. They appear frequently in poetry, prose, and everyday language. Extended metaphors, also called conceits, develop a single metaphor throughout an entire poem or passage. Understanding metaphors is essential for literary analysis and helps readers appreciate deeper meanings in texts.",
+      "summary": "A metaphor directly compares unlike things without 'like' or 'as,' creating implicit connections (e.g., 'Time is a thief'). This literary device creates vivid imagery, simplifies complex ideas, and evokes emotion in poetry, prose, and everyday language.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 6,
+      "subject": "Geography",
+      "grade_level": "Middle School",
+      "source_text": "The water cycle, also known as the hydrologic cycle, describes the continuous movement of water on, above, and below the surface of the Earth. The cycle begins with evaporation, when heat from the sun causes water from oceans, lakes, and rivers to turn into water vapor. This vapor rises into the atmosphere where it cools and condenses into tiny droplets, forming clouds through a process called condensation. When these droplets combine and become heavy enough, they fall back to Earth as precipitation in the form of rain, snow, sleet, or hail. Some of this water flows over the ground as runoff into bodies of water, while some seeps into the ground as groundwater. Plants also release water vapor through transpiration. The cycle then repeats, making water a renewable resource.",
+      "summary": "The water cycle describes water's continuous movement through evaporation (water becoming vapor), condensation (vapor forming clouds), precipitation (rain, snow, etc.), and collection through runoff and groundwater. This cycle makes water renewable.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 7,
+      "subject": "Physics",
+      "grade_level": "High School",
+      "source_text": "Newton's three laws of motion form the foundation of classical mechanics. The first law, the law of inertia, states that an object at rest stays at rest and an object in motion stays in motion with the same speed and direction unless acted upon by an unbalanced force. The second law establishes the relationship between force, mass, and acceleration, expressed as F = ma (force equals mass times acceleration). This means that acceleration is directly proportional to force and inversely proportional to mass. The third law states that for every action, there is an equal and opposite reaction. These laws explain how objects move and interact with forces in everyday life, from a ball rolling down a hill to a rocket launching into space.",
+      "summary": "Newton's three laws of motion are: (1) objects maintain their state of motion unless acted on by force (inertia), (2) force equals mass times acceleration (F=ma), and (3) every action has an equal and opposite reaction. These laws explain object movement and force interactions.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 8,
+      "subject": "Economics",
+      "grade_level": "High School",
+      "source_text": "Supply and demand are fundamental economic concepts that determine prices in a market economy. Supply refers to the quantity of a good or service that producers are willing to offer at various prices. Generally, as prices increase, suppliers are willing to produce more. Demand refers to the quantity of a good or service that consumers are willing to purchase at various prices. Typically, as prices decrease, consumers want to buy more. The point where supply and demand curves intersect is called the equilibrium price - the price at which the quantity supplied equals the quantity demanded. When demand exceeds supply, prices tend to rise. When supply exceeds demand, prices tend to fall. Many factors can shift these curves, including consumer preferences, income levels, production costs, and government policies.",
+      "summary": "Supply and demand determine market prices. Supply is what producers offer at different prices, while demand is what consumers will buy. The equilibrium price occurs where supply equals demand. Prices rise when demand exceeds supply and fall when supply exceeds demand.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 9,
+      "subject": "Computer Science",
+      "grade_level": "High School",
+      "source_text": "An algorithm is a step-by-step procedure or formula for solving a problem or completing a task. In computer science, algorithms are sets of instructions that tell a computer how to process data and produce desired outputs. Good algorithms are efficient, meaning they solve problems quickly and use minimal resources like memory. Algorithm efficiency is often measured using Big O notation, which describes how the algorithm's performance scales with input size. For example, a linear search algorithm that checks each item in a list one by one has O(n) complexity, while a binary search algorithm that divides the search space in half each time has O(log n) complexity, making it much faster for large datasets. Understanding algorithms is fundamental to programming and software development.",
+      "summary": "An algorithm is a step-by-step procedure for solving problems in computer science. Good algorithms are efficient, measured using Big O notation. For example, binary search O(log n) is faster than linear search O(n) for large datasets.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 10,
+      "subject": "Environmental Science",
+      "grade_level": "Middle School",
+      "source_text": "Climate change refers to long-term shifts in global temperatures and weather patterns. While climate has changed throughout Earth's history due to natural causes, current climate change is primarily driven by human activities, especially the burning of fossil fuels like coal, oil, and natural gas. These activities release greenhouse gases, particularly carbon dioxide, into the atmosphere. Greenhouse gases trap heat from the sun, causing the Earth's average temperature to rise - a phenomenon known as global warming. Effects of climate change include rising sea levels, more extreme weather events like hurricanes and droughts, changes in precipitation patterns, and threats to biodiversity. Many scientists and governments are working on solutions including renewable energy sources like solar and wind power, energy efficiency improvements, and reforestation efforts.",
+      "summary": "Climate change involves long-term temperature and weather shifts, primarily caused by human activities like burning fossil fuels. This releases greenhouse gases that trap heat, causing global warming. Effects include rising sea levels, extreme weather, and biodiversity threats. Solutions include renewable energy and reforestation.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 11,
+      "subject": "World History",
+      "grade_level": "High School",
+      "source_text": "The Industrial Revolution, which began in Britain in the late 18th century and spread globally throughout the 19th century, transformed societies from agrarian economies to industrial powerhouses. Key innovations included the steam engine, which powered factories and locomotives; the spinning jenny and power loom, which revolutionized textile production; and advances in iron and steel production. Factories replaced cottage industries, drawing workers from rural areas to rapidly growing cities. While the Industrial Revolution brought unprecedented economic growth and technological progress, it also created harsh working conditions, child labor, pollution, and significant wealth inequality. These social problems eventually led to labor movements, regulations, and reforms that improved workers' rights and living conditions.",
+      "summary": "The Industrial Revolution (late 1700s-1800s) transformed agrarian societies into industrial economies through innovations like the steam engine and mechanized textile production. It brought economic growth but also harsh working conditions, pollution, and inequality, eventually leading to labor reforms.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 12,
+      "subject": "Psychology",
+      "grade_level": "High School",
+      "source_text": "Memory is the mental process of encoding, storing, and retrieving information. Psychologists identify three main types of memory: sensory memory, short-term memory, and long-term memory. Sensory memory holds sensory information for a few seconds or less. Short-term memory, also called working memory, can hold about 7 items for roughly 20-30 seconds without rehearsal. Long-term memory has essentially unlimited capacity and can store information for years or even a lifetime. Information moves from short-term to long-term memory through rehearsal, meaningful association, and organization. Retrieval is the process of accessing stored information. Memory can be affected by many factors including attention, emotion, sleep, and stress. Understanding how memory works helps students develop better study strategies.",
+      "summary": "Memory involves encoding, storing, and retrieving information through three types: sensory (few seconds), short-term (7 items for 20-30 seconds), and long-term (unlimited capacity). Information moves to long-term memory through rehearsal and association, aided by factors like attention and sleep.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 13,
+      "subject": "Civics",
+      "grade_level": "Middle School",
+      "source_text": "The United States government operates on a system of checks and balances across three branches: legislative, executive, and judicial. The legislative branch (Congress) makes laws, the executive branch (President and agencies) enforces laws, and the judicial branch (courts) interprets laws. Each branch has specific powers that can limit the powers of the other branches. For example, Congress passes laws, but the President can veto them. The President nominates federal judges, but the Senate must approve them. The Supreme Court can declare laws unconstitutional. This system was designed by the Founding Fathers to prevent any single branch from becoming too powerful and to protect citizens' rights and freedoms.",
+      "summary": "The U.S. government has three branches with checks and balances: legislative (makes laws), executive (enforces laws), and judicial (interprets laws). Each branch can limit the others' powers to prevent any one from becoming too powerful.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 14,
+      "subject": "Astronomy",
+      "grade_level": "Middle School",
+      "source_text": "The solar system consists of the Sun and all celestial objects bound to it by gravity. At the center is the Sun, a star that contains 99.8% of the solar system's mass and provides energy through nuclear fusion. Eight planets orbit the Sun in elliptical paths: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune. The inner four planets are terrestrial (rocky) planets, while the outer four are gas giants. Between Mars and Jupiter lies the asteroid belt, containing millions of rocky objects. The solar system also includes dwarf planets like Pluto, moons orbiting planets, comets, and the Kuiper Belt beyond Neptune. Everything in the solar system formed about 4.6 billion years ago from a rotating cloud of gas and dust.",
+      "summary": "The solar system includes the Sun (which contains 99.8% of its mass) and eight planets orbiting it: four inner rocky planets and four outer gas giants. It also contains the asteroid belt, dwarf planets, moons, and comets, all formed 4.6 billion years ago.",
+      "summary_type": "abstractive"
+    },
+    {
+      "id": 15,
+      "subject": "Health Education",
+      "grade_level": "Middle School",
+      "source_text": "A balanced diet provides the nutrients your body needs to function properly. The main nutrient groups are carbohydrates, proteins, fats, vitamins, minerals, and water. Carbohydrates provide energy and are found in grains, fruits, and vegetables. Proteins help build and repair body tissues and are found in meat, fish, eggs, beans, and nuts. Healthy fats support brain function and are found in avocados, olive oil, and fish. Vitamins and minerals support various body functions, from bone health to immune system function. Water is essential for every bodily process. A healthy eating pattern includes a variety of colorful fruits and vegetables, whole grains, lean proteins, and healthy fats while limiting added sugars, salt, and saturated fats. Regular physical activity complements good nutrition for overall health.",
+      "summary": "A balanced diet includes six main nutrients: carbohydrates (energy), proteins (tissue building), fats (brain function), vitamins, minerals, and water. Healthy eating involves varied fruits and vegetables, whole grains, lean proteins, and healthy fats while limiting sugar, salt, and saturated fats.",
+      "summary_type": "abstractive"
+    }
+  ]
+}
