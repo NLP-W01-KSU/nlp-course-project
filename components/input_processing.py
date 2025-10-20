@@ -1,4 +1,5 @@
-﻿from transformers import PegasusTokenizer, PegasusForConditionalGeneration
+﻿import os
+from transformers import PegasusTokenizer, PegasusForConditionalGeneration
 from finetune_model import finetune_pegasus
 
 content = """
@@ -16,7 +17,13 @@ def load_base_model():
     return tokenizer, model
 
 def load_finetuned_model(model, tokenizer):
-    return finetune_pegasus(tokenizer, model, output_dir="./finetuned_model")
+    if os.path.exists("./finetuned_model"):
+        print(10*"="+"\nLoading existing finetuned model\n"+(10*"="))
+        model = PegasusForConditionalGeneration.from_pretrained("./finetuned_model", dtype="auto", device_map="auto")
+        tokenizer = PegasusTokenizer.from_pretrained("./finetuned_model")
+        return model, tokenizer
+    else:
+        return finetune_pegasus(tokenizer, model, output_dir="./finetuned_model")
     
 
 def generate_summary(tokenizer, model, content: str, num_beams=1, do_sample=False, prompt_lookup_num_tokens=None) -> str:
