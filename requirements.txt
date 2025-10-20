@@ -2,7 +2,6 @@ requests
 streamlit~=1.50.0
 transformers~=4.57.1
 python-dotenv~=1.1.1
-torch
 sentencepiece
 openai~=2.6.0
 groq
@@ -12,4 +11,5 @@ python-docx~=1.2.0
 reportlab~=4.4.4
 hf_xet
 accelerate
-datasets
+datasets~=4.2.0
+torch~=2.9.0

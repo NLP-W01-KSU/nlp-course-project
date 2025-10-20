@@ -36,7 +36,7 @@ def load_data(train_split=0.8):
 
 def finetune_pegasus(tokenizer, model, output_dir: str, epochs=3, batch_size=8, learning_rate=5e-5):
     """
-    Fine-tune Pegasus hyperparameters
+    Fine-tune hyperparameters
 
     Args:
         tokenizer: Pretrained tokenizer.
