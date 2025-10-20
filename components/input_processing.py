@@ -4,7 +4,7 @@ def base_pegasus_summary(content: str) -> str:
     # Load the Pegasus tokenizer and model
     model_name = "google/pegasus-xsum"
     tokenizer = PegasusTokenizer.from_pretrained(model_name)
-    model = PegasusForConditionalGeneration.from_pretrained(model_name)
+    model = PegasusForConditionalGeneration.from_pretrained(model_name, dtype="auto", device_map="auto")
 
     # Tokenize the input content
     inputs = tokenizer(content, return_tensors="pt", truncation=True)
@@ -15,11 +15,11 @@ def base_pegasus_summary(content: str) -> str:
 
     return summary
 
-def test_base_pegasus_summary():
+def test_pegasus_summary():
     test_content = (
         "The quick brown fox jumps over the lazy dog. This sentence contains every letter of the English alphabet, making it a popular pangram used for testing fonts and keyboard layouts."
     )
     summary = base_pegasus_summary(test_content)
     print("Summary:", summary)
     
-test_base_pegasus_summary()
+test_pegasus_summary()
