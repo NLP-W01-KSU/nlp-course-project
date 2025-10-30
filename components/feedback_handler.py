@@ -4,6 +4,7 @@ from feedback import save_feedback
 from simulate_adapt import adjust_prompt, get_adaptation_explanation
 from components.export_handler import generate_pdf
 from components.output_renderer import render_output
+from db.helpers import save_feedback_to_db
 
 def render_feedback_section():
     """Render the feedback section"""
@@ -75,19 +76,28 @@ def get_feedback_examples():
     return quality_example, placeholder
 
 def save_feedback_data(clarity, depth, complexity, comments):
-    """Save feedback data and update session state"""
+    """Save feedback to PostgreSQL DB with safety checks"""
     try:
-        success = save_feedback(
-            prompt=st.session_state.original_prompt,
-            output=st.session_state.generated_output,
-            clarity=clarity,
-            depth=depth,
-            complexity=complexity,
-            comments=comments,
-            user_type=st.session_state.user_type,
-            student_level=st.session_state.student_level
-        )
+        # Ensure we have a current_history_id
+        if not hasattr(st.session_state, 'current_history_id') or not st.session_state.current_history_id:
+            # Try to save to history first if not already saved
+            from components.session_manager import save_current_to_history
+            entry_id = save_current_to_history()
+            if not entry_id:
+                st.error("❌ Cannot save feedback: Content not saved to history yet.")
+                return
         
+        feedback_data = {
+            "user_id": st.session_state.user_id,
+            "content_id": st.session_state.current_history_id,
+            "clarity": clarity,
+            "depth": depth,
+            "complexity": complexity,
+            "comments": comments
+        }
+
+        success = save_feedback_to_db(feedback_data)
+
         if success:
             st.session_state.feedback_given = True
             st.session_state.feedback_clarity = clarity
@@ -97,7 +107,6 @@ def save_feedback_data(clarity, depth, complexity, comments):
             st.success("✅ Feedback saved! This helps improve the system.")
         else:
             st.error("❌ Failed to save feedback. Please try again.")
-            
     except Exception as e:
         st.error(f"❌ Error saving feedback: {str(e)}")
 

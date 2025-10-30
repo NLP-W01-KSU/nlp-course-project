@@ -2,6 +2,7 @@ import json
 import os
 import re
 from datetime import datetime
+from db.helpers import get_research_stats
 
 def save_feedback(prompt, output, clarity, depth, complexity, comments, user_type=None, student_level=None):
     """
@@ -235,16 +236,13 @@ def export_training_data(output_file="data/training/training_data.jsonl"):
         return False
 
 def get_research_progress():
-    """
-    Comprehensive research progress dashboard
-    """
-    feedback_stats = get_feedback_stats()
-    training_stats = get_training_data_stats()
-    
+    """Fetch research progress from PostgreSQL"""
+    stats = get_research_stats()
+
     return {
-        "total_feedback": feedback_stats["total_feedback"],
-        "high_quality_examples": training_stats["total_training_examples"],
-        "conversion_rate": f"{(training_stats['total_training_examples'] / feedback_stats['total_feedback'] * 100):.1f}%" if feedback_stats['total_feedback'] > 0 else "0%",
-        "average_quality": training_stats["average_scores"],
-        "user_breakdown": training_stats["user_type_breakdown"]
+        "total_feedback": stats["total_feedback"],
+        "high_quality_examples": stats["high_quality_feedback"],
+        "conversion_rate": stats["conversion_rate"],
+        "average_quality": stats["average_scores"],
+        "user_breakdown": stats["user_type_breakdown"]
     }

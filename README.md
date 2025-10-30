@@ -1,10 +1,10 @@
-# EduGen - AI-Powered Educational Content Generator
+# TailorED - AI-Powered Educational Content Generator
 
 A research prototype that uses AI to generate personalized educational content for students and tutors.
 
-## What is EduGen?
+## What is TailorED?
 
-EduGen helps create tailored educational content:
+TailorED helps create tailored educational content:
 - **For Students**: Simplifies complex course material into easy-to-understand explanations
 - **For Tutors**: Generates lesson plans, study guides, and teaching materials
 
@@ -19,6 +19,12 @@ EduGen helps create tailored educational content:
     # Create .env file with your Groq API keys
     GROQ_API_KEY_1=your_first_groq_key
     GROQ_API_KEY_2=your_second_groq_key
+    DB_NAME=your-db-name
+    DB_USERNAME=your-postgre-username
+    DB_PASSWORD=your-postgre-password
+    DB_HOST=localhost
+    DB_PORT=5432   
+    MODEL_URL=url-of-research-model
 
 3. **Run the App**:
     ```bash

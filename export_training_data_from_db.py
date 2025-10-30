@@ -1,0 +1,160 @@
+from db.connection import SessionLocal  
+from db.models import ContentHistory, Feedback
+from sqlalchemy.orm import joinedload
+import os
+import json
+
+MIN_CLARITY = 4
+MIN_DEPTH = 4
+MIN_COMMENT_LENGTH = 25
+
+def is_high_quality(feedback, content_entry):
+    """Check if feedback meets high quality criteria for Groq content (fine-tuning data)"""
+    # Only use Groq content for fine-tuning (the established model)
+    if content_entry.generated_model != "groq":
+        print(f"❌ Skipping - not Groq content: {content_entry.generated_model}")
+        return False
+    
+    # Quality criteria for fine-tuning data
+    if feedback.clarity < MIN_CLARITY:
+        print(f"❌ Clarity too low: {feedback.clarity} < {MIN_CLARITY}")
+        return False
+        
+    if feedback.depth < MIN_DEPTH:
+        print(f"❌ Depth too low: {feedback.depth} < {MIN_DEPTH}")
+        return False
+
+    if feedback.complexity != "Just right":
+        print(f"❌ Complexity not 'Just right': {feedback.complexity}")
+        return False
+
+    comment_text = (feedback.comments or "").strip()
+    if len(comment_text) < MIN_COMMENT_LENGTH:
+        print(f"❌ Comment too short: {len(comment_text)} < {MIN_COMMENT_LENGTH}")
+        return False
+
+    print(f"✅ High-quality Groq feedback for fine-tuning: clarity={feedback.clarity}, depth={feedback.depth}")
+    return True
+
+def format_training_example(entry, feedback):
+    """Format a training example from Groq content and feedback"""
+    if entry.user_type == "student":
+        return {
+            "instruction": f"Simplify the following content for a {entry.student_level} student: {entry.prompt.strip()}",
+            "input": f"Student Level: {entry.student_level}",
+            "output": entry.output.strip(),
+            "metadata": {
+                "user_type": "student",
+                "student_level": entry.student_level,
+                "clarity_score": feedback.clarity,
+                "depth_score": feedback.depth,
+                "complexity": feedback.complexity,
+                "comments": feedback.comments
+            }
+        }
+    elif entry.user_type == "tutor":
+        return {
+            "instruction": f"Create a {entry.content_type} about '{entry.topic}' for {entry.student_level} students.",
+            "input": f"Learning Objectives: {entry.prompt}",
+            "output": entry.output.strip(),
+            "metadata": {
+                "user_type": "tutor", 
+                "content_type": entry.content_type,
+                "topic": entry.topic,
+                "student_level": entry.student_level,
+                "clarity_score": feedback.clarity,
+                "depth_score": feedback.depth,
+                "complexity": feedback.complexity,
+                "comments": feedback.comments
+            }
+        }
+    return None
+
+def export_training_data_from_db(output_file="data/training/phi3_fine_tuning_data.jsonl"):
+    """Export Groq content with high-quality feedback for Phi-3 fine-tuning"""
+    print("🔧 Exporting Groq training data for Phi-3 fine-tuning...")
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+    session = SessionLocal()
+    try:
+        # Get all content entries with their feedback
+        entries = session.query(ContentHistory).options(joinedload(ContentHistory.feedback)).all()
+        print(f"📊 Found {len(entries)} total content entries")
+
+        high_quality_groq = []
+        total_groq_feedback = 0
+        total_entries_checked = 0
+        
+        for entry in entries:
+            total_entries_checked += 1
+            feedback_list = entry.feedback
+            print(f"🔍 Checking entry {total_entries_checked}/{len(entries)}: model={entry.generated_model}, user_type={entry.user_type}, feedback_count={len(feedback_list)}")
+            
+            for feedback in feedback_list:
+                # Count all Groq feedback for statistics
+                if entry.generated_model == "groq":
+                    total_groq_feedback += 1
+                    print(f"  📝 Groq Feedback {total_groq_feedback}: clarity={feedback.clarity}, depth={feedback.depth}")
+                
+                # Only export high-quality Groq feedback (for fine-tuning Phi-3)
+                if is_high_quality(feedback, entry):
+                    example = format_training_example(entry, feedback)
+                    if example:
+                        high_quality_groq.append(example)
+                        print(f"  ✅ Added Groq training example")
+
+        print(f"📈 Export Summary:")
+        print(f"   - Total entries checked: {total_entries_checked}")
+        print(f"   - Total Groq feedback: {total_groq_feedback}")
+        print(f"   - High-quality Groq examples: {len(high_quality_groq)}")
+
+        if not high_quality_groq:
+            print("❌ No high-quality Groq training data found.")
+            print("💡 Make sure you have Groq-generated content with high-quality feedback:")
+            print(f"   - Generated by Groq model")
+            print(f"   - Clarity >= {MIN_CLARITY}")
+            print(f"   - Depth >= {MIN_DEPTH}")
+            print(f"   - Complexity = 'Just right'")
+            print(f"   - Comments length >= {MIN_COMMENT_LENGTH} characters")
+            return False
+
+        # Write to JSONL file (without metadata for training)
+        with open(output_file, "w", encoding="utf-8") as f:
+            for item in high_quality_groq:
+                # Remove metadata for actual training
+                training_item = {
+                    "instruction": item["instruction"],
+                    "input": item["input"],
+                    "output": item["output"]
+                }
+                f.write(json.dumps(training_item, ensure_ascii=False) + "\n")
+
+        print(f"✅ Successfully exported {len(high_quality_groq)} Groq training examples to {output_file}")
+        
+        # Show detailed breakdown
+        if high_quality_groq:
+            student_examples = len([e for e in high_quality_groq if "Simplify" in e["instruction"]])
+            tutor_examples = len([e for e in high_quality_groq if "Create a" in e["instruction"]])
+            print(f"📊 Breakdown: {student_examples} student examples, {tutor_examples} tutor examples")
+            
+            print("📝 Sample training example:")
+            sample = high_quality_groq[0]
+            print(json.dumps({
+                "instruction": sample["instruction"][:100] + "...",
+                "input": sample["input"],
+                "output": sample["output"][:100] + "..."
+            }, indent=2, ensure_ascii=False))
+            
+        return True
+
+    except Exception as e:
+        print(f"❌ Error exporting training data: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+    finally:
+        session.close()
+
+if __name__ == "__main__":
+    export_training_data_from_db()
