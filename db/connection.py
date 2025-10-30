@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
 # Load .env variables
@@ -27,3 +27,36 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def init_db():
+    """Initialize database and create all tables only if they don't exist"""
+    try:
+        # Import Base from models (where your models are actually defined)
+        from db.models import Base
+        
+        # Test database connection first
+        with engine.connect() as conn:
+            print("✅ Database connection successful")
+        
+        # Check if tables already exist
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+        required_tables = ['users', 'content_history', 'feedback']
+        
+        # Check which tables are missing
+        missing_tables = [table for table in required_tables if table not in existing_tables]
+        
+        if missing_tables:
+            print(f"🔄 Creating {len(missing_tables)} missing table(s): {missing_tables}")
+            Base.metadata.create_all(bind=engine)
+            print("✅ Database tables created successfully")
+        else:
+            print("✅ All database tables already exist")
+            
+    except Exception as e:
+        print(f"❌ Error initializing database: {e}")
+        print("Please check your:")
+        print("  - PostgreSQL server is running")
+        print("  - Database exists")
+        print("  - .env file has correct credentials")
+        raise

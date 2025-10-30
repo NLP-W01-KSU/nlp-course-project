@@ -11,7 +11,7 @@ from components.history_page import render_history_page
 
 import base64
 
-# MONKEY PATCH to find where the validation error is coming from
+# Find where the validation error is coming from
 original_b64decode = base64.b64decode
 
 def debug_b64decode(data, *args, **kwargs):
@@ -43,6 +43,14 @@ def scroll_to_top():
     """, height=0)
 
 def main():
+    
+    try:
+        from db.connection import init_db
+        init_db()
+    except Exception as e:
+        st.error(f"❌ Database initialization failed: {e}")
+        st.stop()
+         
     # Initialize session state
     initialize_session_state()
 
