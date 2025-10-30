@@ -2,8 +2,9 @@ import streamlit as st
 import re
 
 def render_output_section():
-    """Render the generated output section"""
-    if st.session_state.generated_output and not st.session_state.regenerated:
+    """Render the generated output section - FIXED for regenerated content"""
+    if st.session_state.generated_output:
+        # ALWAYS render the current content, regardless of regeneration status
         render_output(st.session_state.generated_output)
 
 def render_output(output):

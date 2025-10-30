@@ -112,13 +112,12 @@ def update_pdf_data(content_id, pdf_data):
             print(f"❌ Error updating PDF data: {e}")
             return False
 
-# ------------------------------------
-# ✅ Feedback
-# ------------------------------------
 def save_feedback_to_db(data):
     with next(get_db()) as db:
         try:
             ensure_user_exists(data["user_id"])
+            
+            # Create feedback object with regeneration data
             feedback = Feedback(
                 id=uuid.uuid4(),
                 user_id=data["user_id"],
@@ -126,8 +125,12 @@ def save_feedback_to_db(data):
                 clarity=data["clarity"],
                 depth=data["depth"],
                 complexity=data["complexity"],
-                comments=data["comments"]
+                comments=data["comments"],
+                is_regenerated_feedback=data.get("is_regenerated_feedback", False),
+                regeneration_count=data.get("regeneration_count", 0),
+                regeneration_type=data.get("regeneration_type")
             )
+            
             # Mark content as feedback_given
             content = db.query(ContentHistory).filter_by(id=data["content_id"]).first()
             if content:
@@ -135,11 +138,36 @@ def save_feedback_to_db(data):
 
             db.add(feedback)
             db.commit()
+            print(f"✅ Saved feedback: {feedback.id}, Regenerated: {feedback.is_regenerated_feedback}, Type: {feedback.regeneration_type}")
             return str(feedback.id)
+            
         except SQLAlchemyError as e:
             db.rollback()
             print(f"❌ Error saving feedback: {e}")
             return None
+        
+def debug_regeneration_data():
+    """Temporary function to debug regeneration data"""
+    with next(get_db()) as db:
+        try:
+            # Check all feedback entries
+            all_feedback = db.query(Feedback).all()
+            print(f"📊 Total feedback entries: {len(all_feedback)}")
+            
+            # Check regenerated feedback
+            regenerated = db.query(Feedback).filter(
+                Feedback.is_regenerated_feedback == True
+            ).all()
+            print(f"🔄 Regenerated feedback entries: {len(regenerated)}")
+            
+            # Print details of regenerated entries
+            for fb in regenerated:
+                print(f"  - ID: {fb.id}, Type: {fb.regeneration_type}, Count: {fb.regeneration_count}")
+                
+            return len(regenerated)
+        except Exception as e:
+            print(f"❌ Debug error: {e}")
+            return 0
 
 # ------------------------------------
 # ✅ Research Statistics
@@ -179,7 +207,7 @@ def get_fallback_metrics():
     }
 
 def get_research_stats():
-    """Get basic research statistics for sidebar display"""
+    """Get basic research statistics for sidebar display - UPDATED with regeneration stats"""
     with next(get_db()) as db:
         try:
             total_feedback = db.query(Feedback).count()
@@ -254,6 +282,55 @@ def get_research_stats():
                 phi3_avg_clarity = 0.0
                 phi3_avg_depth = 0.0
 
+            # NEW: Regeneration statistics
+            try:
+                regenerated_feedback_count = db.query(Feedback).filter(
+                    Feedback.is_regenerated_feedback == True
+                ).count()
+                
+                # Regeneration by type
+                model_switch_count = db.query(Feedback).filter(
+                    Feedback.regeneration_type == "model_switch"
+                ).count()
+                
+                feedback_adjustment_count = db.query(Feedback).filter(
+                    Feedback.regeneration_type == "feedback_adjustment"
+                ).count()
+                
+                manual_regeneration_count = db.query(Feedback).filter(
+                    Feedback.regeneration_type == "manual"
+                ).count()
+                
+                # Regeneration quality analysis
+                regenerated_high_quality = db.query(Feedback).filter(
+                    Feedback.is_regenerated_feedback == True,
+                    Feedback.clarity >= 4,
+                    Feedback.depth >= 4,
+                    Feedback.complexity == "Just right"
+                ).count()
+                
+                # Average scores for regenerated vs original content
+                regenerated_avg_clarity_result = db.query(func.avg(Feedback.clarity)).filter(
+                    Feedback.is_regenerated_feedback == True
+                ).scalar()
+                regenerated_avg_clarity = float(regenerated_avg_clarity_result) if regenerated_avg_clarity_result else 0.0
+                
+                original_avg_clarity_result = db.query(func.avg(Feedback.clarity)).filter(
+                    Feedback.is_regenerated_feedback == False
+                ).scalar()
+                original_avg_clarity = float(original_avg_clarity_result) if original_avg_clarity_result else 0.0
+                
+            except Exception as e:
+                print(f"⚠️ Regeneration stats not available yet: {e}")
+                # Fallback regeneration stats
+                regenerated_feedback_count = 0
+                model_switch_count = 0
+                feedback_adjustment_count = 0
+                manual_regeneration_count = 0
+                regenerated_high_quality = 0
+                regenerated_avg_clarity = 0.0
+                original_avg_clarity = 0.0
+
             # Overall average scores (for backward compatibility) - CONVERT TO FLOAT
             avg_clarity_result = db.query(func.avg(Feedback.clarity)).scalar()
             avg_clarity = float(avg_clarity_result) if avg_clarity_result else 0.0
@@ -278,6 +355,20 @@ def get_research_stats():
                     "depth": round(phi3_avg_depth, 2)
                 },
                 
+                # NEW: Regeneration statistics
+                "regenerated_feedback_count": regenerated_feedback_count,
+                "regeneration_types": {
+                    "model_switch": model_switch_count,
+                    "feedback_adjustment": feedback_adjustment_count,
+                    "manual": manual_regeneration_count
+                },
+                "regenerated_high_quality": regenerated_high_quality,
+                "regeneration_quality_comparison": {
+                    "regenerated_avg_clarity": round(regenerated_avg_clarity, 2),
+                    "original_avg_clarity": round(original_avg_clarity, 2),
+                    "quality_gap": round(regenerated_avg_clarity - original_avg_clarity, 2)
+                },
+                
                 # Overall metrics (for backward compatibility)
                 "total_feedback": total_feedback,
                 "total_content": total_content,
@@ -287,7 +378,7 @@ def get_research_stats():
                 }
             }
             
-            print(f"📊 Research stats: Groq clarity={groq_avg_clarity:.2f}, Phi-3 clarity={phi3_avg_clarity:.2f}")
+            print(f"📊 Research stats: Groq clarity={groq_avg_clarity:.2f}, Phi-3 clarity={phi3_avg_clarity:.2f}, Regenerated feedback={regenerated_feedback_count}")
             return stats
             
         except Exception as e:
@@ -300,6 +391,14 @@ def get_research_stats():
                 "phi3_feedback_count": 0,
                 "high_quality_phi3": 0,
                 "phi3_scores": {"clarity": 0.0, "depth": 0.0},
+                "regenerated_feedback_count": 0,
+                "regeneration_types": {"model_switch": 0, "feedback_adjustment": 0, "manual": 0},
+                "regenerated_high_quality": 0,
+                "regeneration_quality_comparison": {
+                    "regenerated_avg_clarity": 0.0,
+                    "original_avg_clarity": 0.0,
+                    "quality_gap": 0.0
+                },
                 "total_feedback": 0,
                 "total_content": 0,
                 "average_scores": {"clarity": 0.0, "depth": 0.0}

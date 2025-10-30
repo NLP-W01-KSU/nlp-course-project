@@ -138,7 +138,7 @@ def handle_regeneration():
                 generate_tutor_content(topic, objectives, student_level, content_type, "")
         
         regeneration_status.empty()
-
+        
 def handle_page_navigation():
     current_page = st.session_state.get("current_page", "generator")
     
@@ -166,10 +166,24 @@ def handle_page_navigation():
             st.info("The research dashboard encountered an error while running.")
     else:
         handle_generator_flow()
-
+        
 def handle_generator_flow():
-    # Check if we have content to display
+    # DEBUG: Check what's in session state
+    print(f"🔍 DEBUG handle_generator_flow:")
+    print(f"   - generated_output: {bool(st.session_state.get('generated_output'))}")
+    print(f"   - regenerated: {st.session_state.get('regenerated', False)}")
+    print(f"   - feedback_given: {st.session_state.get('feedback_given', False)}")
+    print(f"   - pending_regeneration: {st.session_state.get('pending_regeneration', False)}")
+    
+    # Handle pending regeneration FIRST in the generator flow
+    if st.session_state.get('pending_regeneration'):
+        print("🔄 DEBUG: Handling pending regeneration in generator flow")
+        from components.feedback_handler import handle_pending_regeneration
+        handle_pending_regeneration()
+    
+    # Check if we have content to display - REGARDLESS of regeneration status
     if st.session_state.get("generated_output"):
+        print("✅ DEBUG: Rendering content sections")
         render_output_section()
         render_export_section()
         render_feedback_section()

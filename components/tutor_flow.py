@@ -3,6 +3,7 @@ import re
 from generator import model_manager
 from components.export_handler import generate_pdf
 from components.session_manager import update_session_state
+from components.file_processor import process_uploaded_file  # ADD THIS IMPORT
 
 def render_tutor_flow():
     """Render the tutor content generation flow"""
@@ -14,48 +15,90 @@ def render_tutor_flow():
         handle_tutor_regeneration()
         return
     
-    topic, objectives, student_level, content_type, additional_req = get_tutor_inputs()
+    # GET INPUT METHOD FIRST
+    input_method = get_tutor_input_method()
     
-    if topic and objectives and st.button("🚀 Create Teaching Content", type="primary", key="generate_tutor_content"):
-        generate_tutor_content(topic, objectives, student_level, content_type, additional_req)
+    if input_method == "Upload Document":
+        topic, objectives, student_level, content_type, additional_req, document_text, filename = get_tutor_inputs_from_document()
+        if topic and document_text and st.button("🚀 Generate from Document", type="primary", key="generate_from_document"):
+            generate_tutor_content_from_document(topic, objectives, student_level, content_type, additional_req, document_text, filename)
+    else:
+        topic, objectives, student_level, content_type, additional_req = get_tutor_inputs_manual()
+        if topic and objectives and st.button("🚀 Create Teaching Content", type="primary", key="generate_tutor_content"):
+            generate_tutor_content(topic, objectives, student_level, content_type, additional_req)
 
-def handle_tutor_regeneration():
-    """Handle tutor content regeneration with new model"""
-    st.header("👨‍🏫 Tutor Content Creator")
-    render_tutor_info()
-    
-    # Show we're regenerating
-    st.info("🔄 Regenerating your content with the new model...")
-    
-    # Get preserved inputs
-    topic = st.session_state.original_topic
-    objectives = st.session_state.original_objectives
-    student_level = st.session_state.student_level
-    content_type = st.session_state.tutor_content_type
-    additional_req = st.session_state.get("original_additional_req", "")
-    
-    # Show original inputs for context
-    with st.expander("📋 Original Inputs (Read-only)", expanded=True):
-        st.write(f"**Topic:** {topic}")
-        st.write(f"**Student Level:** {student_level}")
-        st.write(f"**Content Type:** {content_type}")
-        st.write(f"**Learning Objectives:** {objectives}")
-        if additional_req:
-            st.write(f"**Additional Requirements:** {additional_req}")
-    
-    # Regenerate the content
-    generate_tutor_content(topic, objectives, student_level, content_type, additional_req)
+def get_tutor_input_method():
+    """Let tutor choose between manual input or document upload"""
+    st.subheader("📥 Input Method")
+    return st.radio(
+        "How would you like to provide the content?",
+        ["Describe Topic & Objectives", "Upload Document"],
+        help="Choose to either describe what you need or upload existing materials to transform"
+    )
 
-def render_tutor_info():
-    """Render tutor flow information"""
-    st.info("""
-    **How this works:** 
-    Tell me what topic you want to teach, and I'll generate comprehensive educational content 
-    tailored to your students' level and learning objectives.
-    """)
+def get_tutor_inputs_from_document():
+    """Get inputs from tutor when uploading a document"""
+    st.subheader("📄 Upload Your Document")
+    
+    uploaded_file = st.file_uploader(
+        "Upload your educational document", 
+        type=["pdf", "pptx", "docx", "txt"],
+        help="Upload lesson plans, curriculum materials, textbook chapters, or any educational content"
+    )
+    
+    document_text = ""
+    filename = "content.pdf"
+    
+    if uploaded_file:
+        with st.spinner("📖 Reading your document..."):
+            document_text, error = process_uploaded_file(uploaded_file)
+        if error:
+            st.error(f"❌ {error}")
+        else:
+            st.success("✅ Document processed successfully!")
+            filename = uploaded_file.name
+            
+            # Show document preview
+            with st.expander("📋 Document Preview", expanded=False):
+                st.text_area("Extracted Text", document_text[:1000] + "..." if len(document_text) > 1000 else document_text, height=200, key="doc_preview")
+    
+    st.subheader("🎯 Transformation Instructions")
+    
+    topic = st.text_input(
+        "What topic is this document about?",
+        placeholder="e.g., Neural Networks, French Revolution, Calculus Basics",
+        help="Briefly describe the main topic of the document"
+    )
+    
+    content_type = st.selectbox(
+        "What would you like me to create from this document?",
+        ["Lecture Notes", "Study Guide", "Interactive Activity", "Lesson Plan", "Comprehensive Explanation", "Assessment Questions"],
+        help="Choose the format you want me to generate based on your document"
+    )
+    
+    student_level = st.selectbox(
+        "What level should the content be adapted for?",
+        ["Elementary School", "Middle School", "High School", "Undergraduate", "Graduate", "Professional Development"],
+        help="Select the target student level for the generated content"
+    )
+    
+    additional_req = st.text_area(
+        "Any specific transformation requirements?",
+        placeholder="e.g., 'Make it more interactive', 'Simplify the language', 'Add real-world examples', 'Focus on key concepts'",
+        help="Specify how you want the content transformed"
+    )
+    
+    # For document-based generation, objectives are optional since they can be extracted
+    objectives = st.text_area(
+        "Learning Objectives (Optional)",
+        placeholder="e.g., 'Students should understand X, apply Y, analyze Z'",
+        help="Optional: Specify what students should learn. If empty, I'll infer from the document."
+    )
+    
+    return topic, objectives, student_level, content_type, additional_req, document_text, filename
 
-def get_tutor_inputs():
-    """Get all inputs from tutor"""
+def get_tutor_inputs_manual():
+    """Get all inputs from tutor (original manual method)"""
     st.subheader("📖 Teaching Topic")
     topic = st.text_area(
         "What topic do you want to teach?",
@@ -97,6 +140,208 @@ def get_tutor_inputs():
     )
     
     return topic, objectives, student_level, content_type, additional_req
+
+def generate_tutor_content_from_document(topic, objectives, student_level, content_type, additional_req, document_text, filename):
+    """Generate content for tutor based on uploaded document"""
+    # STORE ORIGINAL INPUTS FOR REGENERATION
+    st.session_state.original_topic = topic
+    st.session_state.original_objectives = objectives
+    st.session_state.original_additional_req = additional_req
+    st.session_state.original_document_text = document_text
+    st.session_state.original_filename = filename
+    
+    with st.spinner("📝 Transforming your document into new content..."):
+        selected_model = st.session_state.get("selected_model", "groq")
+        
+        # Build document-based prompt
+        if selected_model == "phi3":
+            prompt = build_phi3_document_prompt(topic, objectives, student_level, content_type, additional_req, document_text)
+        else:
+            prompt = build_groq_document_prompt(topic, objectives, student_level, content_type, additional_req, document_text)
+        
+        try:
+            output = model_manager.generate(
+                prompt,
+                selected_model,
+                user_type="tutor", 
+                student_level=student_level, 
+                content_type=content_type
+            )
+            
+            # Check if it's an error message
+            if any(msg in output for msg in ["🚫", "📊", "❌", "[Error", "[RateLimit]", "[Quota]", "[Auth]", "[Empty]", "❌ Phi-3 Error:"]):
+                st.error(output)
+                return
+            
+            # Generate PDF
+            pdf_data = generate_pdf(
+                output, 
+                "tutor", 
+                level=student_level,
+                topic=topic,
+                content_type=f"{content_type} from Document",
+                objectives=objectives or "Derived from uploaded document"
+            )
+            
+            # Update session state
+            update_session_state(
+                original_prompt=prompt,
+                generated_output=output,
+                feedback_given=False,
+                regenerated=False,
+                content_source="tutor_document",
+                student_level=student_level,
+                tutor_topic=topic,
+                tutor_content_type=content_type,
+                pdf_export_data=pdf_data,
+                saved_to_history=False,
+                current_history_id=None,
+                generated_model=selected_model
+            )
+            
+            st.rerun()
+            
+        except Exception as e:
+            st.error(f"❌ Generation failed: {str(e)}")
+
+def build_phi3_document_prompt(topic, objectives, student_level, content_type, additional_req, document_text):
+    """Build Phi-3 prompt for document-based content generation"""
+    
+    content_descriptions = {
+        "Lecture Notes": "detailed lecture notes suitable for classroom teaching",
+        "Study Guide": "comprehensive study guide for student self-study",
+        "Interactive Activity": "engaging interactive learning activities for students",
+        "Lesson Plan": "structured lesson plan with timing and activities", 
+        "Comprehensive Explanation": "thorough explanatory document",
+        "Assessment Questions": "quiz questions, exercises, or assessment materials"
+    }
+    
+    description = content_descriptions.get(content_type, "educational content")
+    
+    prompt = f"""Transform the provided educational document into {description}.
+
+ORIGINAL DOCUMENT CONTENT:
+{document_text}
+
+TOPIC: {topic}
+"""
+    if objectives:
+        prompt += f"\nLEARNING OBJECTIVES: {objectives}"
+    
+    prompt += f"""
+TARGET AUDIENCE: {student_level} students
+OUTPUT FORMAT: {content_type}
+"""
+    if additional_req:
+        prompt += f"\nSPECIFIC REQUIREMENTS: {additional_req}"
+    
+    prompt += f"""
+
+TRANSFORMATION INSTRUCTIONS:
+- Create {content_type.lower()} based on the original document content
+- Adapt the material for {student_level} students
+- Maintain the core educational concepts but reformat for the new purpose
+- Use appropriate language and examples for the target level
+- Structure the content effectively for {content_type.lower()}
+
+FORBIDDEN:
+- Do not simply copy the original content
+- Do not use phrases like "based on the document" or "the original content says"
+- Do not refer to yourself as an AI or assistant
+- Do not include meta-commentary about the transformation process
+
+BEGIN {content_type.upper()}:
+
+"""
+    return prompt
+
+def build_groq_document_prompt(topic, objectives, student_level, content_type, additional_req, document_text):
+    """Build Groq prompt for document-based content generation"""
+    
+    prompt = f"""Create {content_type.lower()} based on the following document:
+
+DOCUMENT CONTENT:
+{document_text}
+
+TOPIC: {topic}
+"""
+    if objectives:
+        prompt += f"\nLEARNING OBJECTIVES: {objectives}"
+    
+    prompt += f"""
+STUDENT LEVEL: {student_level}
+CONTENT TYPE: {content_type}
+"""
+    if additional_req:
+        prompt += f"\nADDITIONAL REQUIREMENTS: {additional_req}"
+    
+    prompt += f"""
+
+Transform the document content into effective {content_type.lower()} suitable for {student_level} students.
+"""
+    return prompt
+
+def handle_tutor_regeneration():
+    """Handle tutor content regeneration with new model"""
+    st.header("👨‍🏫 Tutor Content Creator")
+    render_tutor_info()
+    
+    # Show we're regenerating
+    st.info("🔄 Regenerating your content with the new model...")
+    
+    # Check if this was document-based content
+    if st.session_state.get("content_source") == "tutor_document" and st.session_state.get("original_document_text"):
+        # Document-based regeneration
+        topic = st.session_state.original_topic
+        objectives = st.session_state.original_objectives  
+        student_level = st.session_state.student_level
+        content_type = st.session_state.tutor_content_type
+        additional_req = st.session_state.get("original_additional_req", "")
+        document_text = st.session_state.original_document_text
+        filename = st.session_state.get("original_filename", "content.pdf")
+        
+        # Show original inputs for context
+        with st.expander("📋 Original Inputs (Read-only)", expanded=True):
+            st.write(f"**Source Document:** {filename}")
+            st.write(f"**Topic:** {topic}")
+            st.write(f"**Student Level:** {student_level}")
+            st.write(f"**Content Type:** {content_type}")
+            if objectives:
+                st.write(f"**Learning Objectives:** {objectives}")
+            if additional_req:
+                st.write(f"**Transformation Requirements:** {additional_req}")
+        
+        # Regenerate from document
+        generate_tutor_content_from_document(topic, objectives, student_level, content_type, additional_req, document_text, filename)
+    else:
+        # Manual input regeneration (existing code)
+        topic = st.session_state.original_topic
+        objectives = st.session_state.original_objectives
+        student_level = st.session_state.student_level
+        content_type = st.session_state.tutor_content_type
+        additional_req = st.session_state.get("original_additional_req", "")
+        
+        # Show original inputs for context
+        with st.expander("📋 Original Inputs (Read-only)", expanded=True):
+            st.write(f"**Topic:** {topic}")
+            st.write(f"**Student Level:** {student_level}")
+            st.write(f"**Content Type:** {content_type}")
+            st.write(f"**Learning Objectives:** {objectives}")
+            if additional_req:
+                st.write(f"**Additional Requirements:** {additional_req}")
+        
+        # Regenerate the content
+        generate_tutor_content(topic, objectives, student_level, content_type, additional_req)
+
+def render_tutor_info():
+    """Render tutor flow information"""
+    st.info("""
+    **How this works:** 
+    - **Describe Topic & Objectives**: Tell me what you want to teach, and I'll generate educational content from scratch
+    - **Upload Document**: Upload existing materials (lesson plans, textbooks, etc.) and I'll transform them into new formats like lecture notes, study guides, or interactive activities
+    
+    **Perfect for**: Converting lesson plans to lecture notes, textbook chapters to study guides, curriculum materials to interactive activities
+    """)
 
 def generate_tutor_content(topic, objectives, student_level, content_type, additional_req):
     """Generate content for tutor with optimized content handling"""

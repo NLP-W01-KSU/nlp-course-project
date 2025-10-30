@@ -40,7 +40,6 @@ class ContentHistory(Base):
     user = relationship("User", back_populates="history")
     feedback = relationship("Feedback", back_populates="content", cascade="all, delete-orphan")
 
-
 class Feedback(Base):
     __tablename__ = "feedback"
 
@@ -52,6 +51,25 @@ class Feedback(Base):
     complexity = Column(String)
     comments = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # NEW FIELDS for regenerated content tracking
+    is_regenerated_feedback = Column(Boolean, default=False)
+    regeneration_count = Column(Integer, default=0)
+    regeneration_type = Column(String)  # 'model_switch', 'feedback_adjustment', 'manual'
 
     user = relationship("User", back_populates="feedbacks")
     content = relationship("ContentHistory", back_populates="feedback")
+# class Feedback(Base):
+#     __tablename__ = "feedback"
+
+#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+#     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+#     content_id = Column(UUID(as_uuid=True), ForeignKey("content_history.id"))
+#     clarity = Column(Integer)
+#     depth = Column(Integer)
+#     complexity = Column(String)
+#     comments = Column(Text)
+#     created_at = Column(DateTime, default=datetime.utcnow)
+
+#     user = relationship("User", back_populates="feedbacks")
+#     content = relationship("ContentHistory", back_populates="feedback")

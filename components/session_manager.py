@@ -42,13 +42,18 @@ def initialize_session_state():
         "current_page": "generator",
         "current_history_id": None,
         "saved_to_history": False,
-        "user_history": [],  # This will be overwritten by load_user_history_from_db()
+        "user_history": [],  
         "from_history": False,
         "showing_regeneration_prompt": False,
         "pending_model_switch": None,
         "previous_model": None,
         "regenerate_with_new_model": False,
-        "scrolled_to_top": False
+        "scrolled_to_top": False,
+        "regeneration_count": 0,  
+        "regeneration_type": None,  
+        "previous_feedback_given": False,
+        "pending_regeneration": False,  
+        "show_adaptation_message": True,  
     }
 
     for key, value in session_defaults.items():
@@ -132,9 +137,9 @@ def get_session_info():
         "current_history_id": st.session_state.current_history_id,
         "history_entries": len(st.session_state.user_history)
     }
-    
+
 def prepare_for_model_regeneration():
-    """Prepare session state for model regeneration while preserving content context"""
+    """Prepare session state for model regeneration - UPDATED tracking"""
     # Preserve the essential content generation context
     preserved_data = {
         'user_type': st.session_state.user_type,
@@ -159,6 +164,10 @@ def prepare_for_model_regeneration():
     for key in keys_to_clear:
         if key in st.session_state:
             del st.session_state[key]
+    
+    # Track regeneration
+    st.session_state.regeneration_count = st.session_state.get('regeneration_count', 0) + 1
+    st.session_state.regeneration_type = 'model_switch'
     
     # Restore preserved context
     for key, value in preserved_data.items():
