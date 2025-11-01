@@ -282,7 +282,7 @@ def get_research_stats():
                 phi3_avg_clarity = 0.0
                 phi3_avg_depth = 0.0
 
-            # NEW: Regeneration statistics
+            # NEW: Regeneration statistics - UPDATED WITH DEPTH
             try:
                 regenerated_feedback_count = db.query(Feedback).filter(
                     Feedback.is_regenerated_feedback == True
@@ -301,7 +301,7 @@ def get_research_stats():
                     Feedback.regeneration_type == "manual"
                 ).count()
                 
-                # Regeneration quality analysis
+                # Regeneration quality analysis - ADD DEPTH METRICS
                 regenerated_high_quality = db.query(Feedback).filter(
                     Feedback.is_regenerated_feedback == True,
                     Feedback.clarity >= 4,
@@ -309,7 +309,7 @@ def get_research_stats():
                     Feedback.complexity == "Just right"
                 ).count()
                 
-                # Average scores for regenerated vs original content
+                # Average scores for regenerated vs original content - CLARITY
                 regenerated_avg_clarity_result = db.query(func.avg(Feedback.clarity)).filter(
                     Feedback.is_regenerated_feedback == True
                 ).scalar()
@@ -319,6 +319,17 @@ def get_research_stats():
                     Feedback.is_regenerated_feedback == False
                 ).scalar()
                 original_avg_clarity = float(original_avg_clarity_result) if original_avg_clarity_result else 0.0
+                
+                # NEW: Average scores for regenerated vs original content - DEPTH
+                regenerated_avg_depth_result = db.query(func.avg(Feedback.depth)).filter(
+                    Feedback.is_regenerated_feedback == True
+                ).scalar()
+                regenerated_avg_depth = float(regenerated_avg_depth_result) if regenerated_avg_depth_result else 0.0
+                
+                original_avg_depth_result = db.query(func.avg(Feedback.depth)).filter(
+                    Feedback.is_regenerated_feedback == False
+                ).scalar()
+                original_avg_depth = float(original_avg_depth_result) if original_avg_depth_result else 0.0
                 
             except Exception as e:
                 print(f"⚠️ Regeneration stats not available yet: {e}")
@@ -330,6 +341,8 @@ def get_research_stats():
                 regenerated_high_quality = 0
                 regenerated_avg_clarity = 0.0
                 original_avg_clarity = 0.0
+                regenerated_avg_depth = 0.0  # NEW
+                original_avg_depth = 0.0    # NEW
 
             # Overall average scores (for backward compatibility) - CONVERT TO FLOAT
             avg_clarity_result = db.query(func.avg(Feedback.clarity)).scalar()
@@ -355,7 +368,7 @@ def get_research_stats():
                     "depth": round(phi3_avg_depth, 2)
                 },
                 
-                # NEW: Regeneration statistics
+                # NEW: Regeneration statistics - UPDATED WITH DEPTH
                 "regenerated_feedback_count": regenerated_feedback_count,
                 "regeneration_types": {
                     "model_switch": model_switch_count,
@@ -366,6 +379,8 @@ def get_research_stats():
                 "regeneration_quality_comparison": {
                     "regenerated_avg_clarity": round(regenerated_avg_clarity, 2),
                     "original_avg_clarity": round(original_avg_clarity, 2),
+                    "regenerated_avg_depth": round(regenerated_avg_depth, 2),      # NEW
+                    "original_avg_depth": round(original_avg_depth, 2),            # NEW
                     "quality_gap": round(regenerated_avg_clarity - original_avg_clarity, 2)
                 },
                 
@@ -383,7 +398,7 @@ def get_research_stats():
             
         except Exception as e:
             print(f"❌ Error getting research stats: {e}")
-            # Return safe fallback stats with floats
+            # Return safe fallback stats with floats - UPDATED WITH DEPTH
             return {
                 "groq_feedback_count": 0,
                 "high_quality_groq": 0,
@@ -397,6 +412,8 @@ def get_research_stats():
                 "regeneration_quality_comparison": {
                     "regenerated_avg_clarity": 0.0,
                     "original_avg_clarity": 0.0,
+                    "regenerated_avg_depth": 0.0,      # NEW
+                    "original_avg_depth": 0.0,         # NEW
                     "quality_gap": 0.0
                 },
                 "total_feedback": 0,

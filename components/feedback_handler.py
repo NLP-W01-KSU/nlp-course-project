@@ -238,9 +238,6 @@ def handle_pending_regeneration():
                 
                 print("✅ DEBUG: Regeneration complete, content should display now")
                 
-                # DON'T show any messages here - let the main flow handle display
-                # The content will be displayed in handle_generator_flow()
-                
             except Exception as e:
                 print(f"❌ DEBUG: Regeneration failed: {e}")
                 st.error(f"❌ Regeneration failed: {str(e)}")

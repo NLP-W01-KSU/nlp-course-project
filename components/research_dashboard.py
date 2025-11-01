@@ -97,23 +97,39 @@ def render_regeneration_analysis(stats):
         else:
             st.info("No regeneration data available yet.")
         
-        # Quality comparison chart
+        # Quality comparison chart - UPDATED: Show both clarity and depth
         st.subheader("📊 Original vs Regenerated Content Quality")
         quality_comp = stats.get("regeneration_quality_comparison", {})
         
         if quality_comp and quality_comp.get('original_avg_clarity', 0) > 0:
+            # Create comparison for both clarity and depth
+            metrics = ['Clarity', 'Depth']
+            original_values = [
+                quality_comp.get('original_avg_clarity', 0),
+                quality_comp.get('original_avg_depth', 0)
+            ]
+            regenerated_values = [
+                quality_comp.get('regenerated_avg_clarity', 0),
+                quality_comp.get('regenerated_avg_depth', 0)
+            ]
+            
             fig = go.Figure(data=[
-                go.Bar(name='Original', x=['Clarity'], y=[quality_comp.get('original_avg_clarity', 0)], marker_color='blue'),
-                go.Bar(name='Regenerated', x=['Clarity'], y=[quality_comp.get('regenerated_avg_clarity', 0)], marker_color='orange')
+                go.Bar(name='Original', x=metrics, y=original_values, marker_color='blue'),
+                go.Bar(name='Regenerated', x=metrics, y=regenerated_values, marker_color='orange')
             ])
-            fig.update_layout(title="Average Clarity: Original vs Regenerated", barmode='group')
+            fig.update_layout(
+                title="Average Quality: Original vs Regenerated",
+                barmode='group',
+                yaxis_title="Score",
+                height=400
+            )
             st.plotly_chart(fig)
         else:
             st.info("Not enough data for quality comparison yet.")
 
 def render_user_behavior_analysis(stats):
     """Analyze user behavior patterns"""
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)  # Added extra column for Phi-3 usage
     
     with col1:
         # User type distribution (if available)
@@ -143,13 +159,24 @@ def render_user_behavior_analysis(stats):
             st.metric("Regeneration Rate", "0%")
     
     with col3:
-        # High-quality content analysis
-        total_hq = stats.get("high_quality_groq", 0) + stats.get("high_quality_phi3", 0)
-        if total_feedback > 0:
-            hq_rate = (total_hq / total_feedback) * 100
-            st.metric("Overall HQ Rate", f"{hq_rate:.1f}%")
+        # High-quality content analysis for Groq
+        groq_hq = stats.get("high_quality_groq", 0)
+        groq_feedback = stats.get("groq_feedback_count", 0)
+        if groq_feedback > 0:
+            groq_hq_rate = (groq_hq / groq_feedback) * 100
+            st.metric("Groq HQ Rate", f"{groq_hq_rate:.1f}%")
         else:
-            st.metric("Overall HQ Rate", "0%")
+            st.metric("Groq HQ Rate", "0%")
+    
+    with col4:
+        # High-quality content analysis for Phi-3 - NEW
+        phi3_hq = stats.get("high_quality_phi3", 0)
+        phi3_feedback = stats.get("phi3_feedback_count", 0)
+        if phi3_feedback > 0:
+            phi3_hq_rate = (phi3_hq / phi3_feedback) * 100
+            st.metric("Phi-3 HQ Rate", f"{phi3_hq_rate:.1f}%")
+        else:
+            st.metric("Phi-3 HQ Rate", "0%")
     
     # Model preference over time (simulated - you'd need timestamp data for real implementation)
     st.subheader("📈 Model Preference Trend")
