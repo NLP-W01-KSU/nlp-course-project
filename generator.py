@@ -16,7 +16,7 @@ def get_groq_api_keys():
             api_keys = [
                 groq_secrets.get("api_key_1"),
                 groq_secrets.get("api_key_2"),
-                groq_secrets.get("api_key"),  # Fallback for single key
+                groq_secrets.get("api_key"),  
             ]
             # Filter out None values
             valid_keys = [key for key in api_keys if key and key.strip()]
