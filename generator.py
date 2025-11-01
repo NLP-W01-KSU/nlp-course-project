@@ -11,22 +11,36 @@ def get_groq_api_keys():
         # Try Streamlit secrets first (deployment)
         import streamlit as st
         if hasattr(st, 'secrets') and 'groq' in st.secrets:
-            api_key = st.secrets["groq"].get("api_key")
-            if api_key:
-                return [api_key]
+            groq_secrets = st.secrets["groq"]
+            # Get ALL API keys from secrets
+            api_keys = [
+                groq_secrets.get("api_key_1"),
+                groq_secrets.get("api_key_2"),
+                groq_secrets.get("api_key"),  
+            ]
+            # Filter out None values
+            valid_keys = [key for key in api_keys if key and key.strip()]
+            if valid_keys:
+                print(f"✅ Found {len(valid_keys)} Groq API keys in Streamlit secrets")
+                return valid_keys
     except (ImportError, AttributeError, KeyError):
         pass
     
     # Fallback to environment variables (local development)
-    # Try multiple keys for local development
     groq_keys = [
-        os.getenv("GROQ_API_KEY"),
         os.getenv("GROQ_API_KEY_1"),
         os.getenv("GROQ_API_KEY_2"),
+        os.getenv("GROQ_API_KEY"),  # Fallback
     ]
     
     # Filter out None values
-    return [key for key in groq_keys if key and key.strip()]
+    valid_keys = [key for key in groq_keys if key and key.strip()]
+    if valid_keys:
+        print(f"✅ Found {len(valid_keys)} Groq API keys in environment")
+        return valid_keys
+    
+    print("❌ No Groq API keys found")
+    return []
 
 def get_ollama_url():
     """Get Ollama URL from Streamlit secrets or environment variables"""
