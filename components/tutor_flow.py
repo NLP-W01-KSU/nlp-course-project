@@ -3,7 +3,7 @@ import re
 from generator import model_manager
 from components.export_handler import generate_pdf
 from components.session_manager import update_session_state
-from components.file_processor import process_uploaded_file  # ADD THIS IMPORT
+from components.file_processor import process_uploaded_file  
 
 def render_tutor_flow():
     """Render the tutor content generation flow"""
@@ -477,86 +477,133 @@ def generate_single_large_tutor_content(topic, objectives, student_level, conten
 
 def generate_chunked_tutor_content(topic, objectives, student_level, content_type, additional_req):
     """Generate comprehensive tutor content by breaking down objectives"""
-    objective_chunks = chunk_objectives(objectives, max_chunk_size=4000)
-    
-    if not objective_chunks:
-        generate_single_large_tutor_content(topic, objectives, student_level, content_type, additional_req)
-        return
-    
-    all_outputs = []
-    progress_bar = st.progress(0)
-    status_text = st.empty()
-    
-    selected_model = st.session_state.get("selected_model", "groq")
-    
-    for i, objective_chunk in enumerate(objective_chunks):
-        status_text.text(f"📖 Creating content for learning objective {i+1}/{len(objective_chunks)}...")
-        progress_bar.progress((i) / len(objective_chunks))
+    try:
+        objective_chunks = chunk_objectives(objectives, max_chunk_size=4000)
         
-        # Use Phi-3 specific prompts if Phi-3 is selected
-        if selected_model == "phi3":
-            prompt = build_phi3_tutor_chunk_prompt(topic, objective_chunk, student_level, content_type, additional_req, i+1, len(objective_chunks))
-        else:
-            prompt = build_groq_tutor_chunk_prompt(topic, objective_chunk, student_level, content_type, additional_req, i+1, len(objective_chunks))
-        
-        try:
-            output = model_manager.generate(
-                prompt,
-                selected_model,
-                user_type="tutor",
-                student_level=student_level,
-                content_type=content_type
-            )
-            
-            if any(msg in output for msg in ["🚫", "📊", "❌", "[Error", "[RateLimit]", "[Quota]", "[Auth]", "[Empty]", "❌ Phi-3 Error:"]):
-                st.error(f"❌ Failed to process objective {i+1}: {output}")
-                return
-            
-            all_outputs.append(output)
-            
-        except Exception as e:
-            st.error(f"❌ Failed to process objective {i+1}: {str(e)}")
+        if not objective_chunks:
+            st.info("🔄 Using single processing method for objectives...")
+            generate_single_large_tutor_content(topic, objectives, student_level, content_type, additional_req)
             return
-    
-    # Update progress to complete
-    progress_bar.progress(1.0)
-    status_text.text("✅ All sections processed! Combining results...")
-    
-    # Combine all outputs
-    final_output = combine_tutor_outputs(all_outputs, topic, student_level, content_type)
-    
-    # Generate PDF and update session state
-    pdf_data = generate_pdf(
-        final_output, 
-        "tutor", 
-        level=student_level,
-        topic=topic,
-        content_type=content_type,
-        objectives=objectives
-    )
-    
-    update_session_state(
-        original_prompt=f"{content_type} for {topic} - {student_level} level",
-        generated_output=final_output,
-        feedback_given=False,
-        regenerated=False,
-        content_source="tutor",
-        student_level=student_level,
-        tutor_topic=topic,
-        tutor_content_type=content_type,
-        pdf_export_data=pdf_data,
-        saved_to_history=False,
-        current_history_id=None,
-        generated_model=selected_model
-    )
-    
-    status_text.text("✅ Content generation complete!")
-    st.rerun()
+        
+        st.info(f"📊 Objectives split into {len(objective_chunks)} sections for processing...")
+        
+        all_outputs = []
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        selected_model = st.session_state.get("selected_model", "groq")
+        
+        for i, objective_chunk in enumerate(objective_chunks):
+            if not objective_chunk or len(objective_chunk.strip()) == 0:
+                continue
+                
+            status_text.text(f"📖 Creating content for learning objective {i+1}/{len(objective_chunks)}...")
+            progress_bar.progress((i) / len(objective_chunks))
+            
+            # Use Phi-3 specific prompts if Phi-3 is selected
+            if selected_model == "phi3":
+                prompt = build_phi3_tutor_chunk_prompt(topic, objective_chunk, student_level, content_type, additional_req, i+1, len(objective_chunks))
+            else:
+                prompt = build_groq_tutor_chunk_prompt(topic, objective_chunk, student_level, content_type, additional_req, i+1, len(objective_chunks))
+            
+            try:
+                output = model_manager.generate(
+                    prompt,
+                    selected_model,
+                    user_type="tutor",
+                    student_level=student_level,
+                    content_type=content_type
+                )
+                
+                if any(msg in output for msg in ["🚫", "📊", "❌", "[Error", "[RateLimit]", "[Quota]", "[Auth]", "[Empty]", "❌ Phi-3 Error:"]):
+                    st.error(f"❌ Failed to process objective {i+1}: {output}")
+                    # Continue with other chunks instead of stopping completely
+                    all_outputs.append(f"[Objective {i+1} processing failed: {output}]")
+                    continue
+                
+                all_outputs.append(output)
+                
+            except Exception as e:
+                st.error(f"❌ Failed to process objective {i+1}: {str(e)}")
+                # Continue with other chunks instead of stopping completely
+                all_outputs.append(f"[Objective {i+1} processing failed: {str(e)}]")
+                continue
+        
+        # Check if we got any successful outputs
+        successful_outputs = [output for output in all_outputs if not output.startswith("[Objective")]
+        if not successful_outputs:
+            st.error("❌ All objective sections failed to process. Please try again with different content.")
+            return
+        
+        # Update progress to complete
+        progress_bar.progress(1.0)
+        status_text.text("✅ All sections processed! Combining results...")
+        
+        # Combine all outputs
+        final_output = combine_tutor_outputs(all_outputs, topic, student_level, content_type)
+        
+        # Generate PDF and update session state
+        pdf_data = generate_pdf(
+            final_output, 
+            "tutor", 
+            level=student_level,
+            topic=topic,
+            content_type=content_type,
+            objectives=objectives
+        )
+        
+        update_session_state(
+            original_prompt=f"{content_type} for {topic} - {student_level} level",
+            generated_output=final_output,
+            feedback_given=False,
+            regenerated=False,
+            content_source="tutor",
+            student_level=student_level,
+            tutor_topic=topic,
+            tutor_content_type=content_type,
+            pdf_export_data=pdf_data,
+            saved_to_history=False,
+            current_history_id=None,
+            generated_model=selected_model
+        )
+        
+        status_text.text("✅ Content generation complete!")
+        st.rerun()
+        
+    except Exception as e:
+        st.error(f"❌ Chunked tutor processing failed: {str(e)}")
+        # Fallback to single large content processing
+        st.info("🔄 Trying alternative processing method...")
+        generate_single_large_tutor_content(topic, objectives, student_level, content_type, additional_req)
 
 def chunk_objectives(objectives, max_chunk_size=4000):
-    """Split objectives into manageable chunks with increased size"""
-    objective_items = re.split(r'[\n•\-]', objectives)
-    objective_items = [item.strip() for item in objective_items if item.strip()]
+    """Split objectives into manageable chunks with robust error handling"""
+    if not objectives or len(objectives.strip()) == 0:
+        return []
+    
+    # If objectives are already small enough, return as single chunk
+    if len(objectives) <= max_chunk_size:
+        return [objectives.strip()]
+    
+    # Multiple splitting strategies
+    objective_items = []
+    
+    # Try splitting by common delimiters
+    for delimiter in [r'\n', r'•', r'-', r'\*', r';']:
+        items = re.split(delimiter, objectives)
+        items = [item.strip() for item in items if item.strip()]
+        if len(items) > 1:
+            objective_items = items
+            break
+    
+    # If no delimiters found, split by sentences
+    if not objective_items:
+        sentences = re.split(r'[.!?]+', objectives)
+        objective_items = [s.strip() for s in sentences if s.strip()]
+    
+    # If still no items, use the original text
+    if not objective_items:
+        objective_items = [objectives]
     
     chunks = []
     current_chunk = ""
@@ -575,10 +622,19 @@ def chunk_objectives(objectives, max_chunk_size=4000):
     if current_chunk:
         chunks.append(current_chunk)
     
-    if len(chunks) > 5 and max_chunk_size < 6000:
-        return chunk_objectives(objectives, max_chunk_size + 1000)
+    # Final validation
+    validated_chunks = []
+    for chunk in chunks:
+        if len(chunk) > max_chunk_size * 1.2:  # Allow 20% overflow
+            # Emergency split by fixed size
+            for i in range(0, len(chunk), max_chunk_size):
+                sub_chunk = chunk[i:i + max_chunk_size]
+                if sub_chunk.strip():
+                    validated_chunks.append(sub_chunk.strip())
+        else:
+            validated_chunks.append(chunk)
     
-    return chunks
+    return validated_chunks
 
 def build_phi3_tutor_chunk_prompt(topic, objective_chunk, student_level, content_type, additional_req, chunk_num, total_chunks):
     """Build Phi-3 specific prompt for a single tutor chunk"""
@@ -638,11 +694,22 @@ def combine_tutor_outputs(outputs, topic, student_level, content_type):
     combined = f"# {content_type}: {topic}\n\n"
     combined += f"**Target Level:** {student_level}\n\n"
     
+    successful_parts = 0
     for i, output in enumerate(outputs):
+        # Skip failed sections
+        if output.startswith("[Objective"):
+            combined += f"## Part {i+1} - Processing Failed\n\n*This section could not be processed due to technical issues.*\n\n---\n\n"
+            continue
+            
         # Clean up any instructional language
         clean_output = re.sub(r'(?:Here is|I will|This section|Students will|We will).*?(?=\n\n|\n#|\n##|$)', '', output, flags=re.IGNORECASE | re.DOTALL)
-        section_title = f"## Part {i+1}\n\n"
-        combined += section_title + clean_output.strip() + "\n\n---\n\n"
+        if clean_output.strip():
+            section_title = f"## Part {i+1}\n\n"
+            combined += section_title + clean_output.strip() + "\n\n---\n\n"
+            successful_parts += 1
+    
+    if successful_parts == 0:
+        return "❌ All objective sections failed to process. Please try again with different content."
     
     return combined
 

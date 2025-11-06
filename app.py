@@ -1,3 +1,5 @@
+import sys
+import os
 import streamlit as st
 import re
 from components.session_manager import initialize_session_state, clear_session, save_current_to_history, get_or_create_user_id
@@ -43,14 +45,12 @@ def scroll_to_top():
     """, height=0)
 
 def main():
-    
-    try:
-        from db.connection import init_db
-        init_db()
-    except Exception as e:
-        st.error(f"❌ Database initialization failed: {e}")
-        st.stop()
-         
+    # REMOVED: Manual database initialization (it happens automatically in connection.py)
+    # Just check if database is available and show warning if not
+    from db.connection import is_database_available
+    if not is_database_available():
+        st.warning("⚠️ Running without database - history and user data won't be saved")
+     
     # Initialize session state
     initialize_session_state()
 

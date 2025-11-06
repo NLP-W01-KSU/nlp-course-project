@@ -59,17 +59,3 @@ class Feedback(Base):
 
     user = relationship("User", back_populates="feedbacks")
     content = relationship("ContentHistory", back_populates="feedback")
-# class Feedback(Base):
-#     __tablename__ = "feedback"
-
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-#     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-#     content_id = Column(UUID(as_uuid=True), ForeignKey("content_history.id"))
-#     clarity = Column(Integer)
-#     depth = Column(Integer)
-#     complexity = Column(String)
-#     comments = Column(Text)
-#     created_at = Column(DateTime, default=datetime.utcnow)
-
-#     user = relationship("User", back_populates="feedbacks")
-#     content = relationship("ContentHistory", back_populates="feedback")
